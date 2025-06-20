@@ -1,0 +1,29 @@
+[
+    {
+        "user_id": "12345",
+        "phone_number": "+15551234567",
+        "email": "user@example.com",
+        "bills": [
+            {
+                "month": "May",
+                "total": 101.49,
+                "charges": {
+                    "base_plan": 100,
+                    "discount": -25,
+                    "taxes": 3.49
+                }
+            },
+            {
+                "month": "June",
+                "total": 187.53,
+                "charges": {
+                    "base_plan": 100,
+                    "premium_addons": 50,
+                    "device_protection": 15,
+                    "equipment_fees": 10,
+                    "taxes": 12.53
+                }
+            }
+        ]
+    }
+]
