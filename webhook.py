@@ -8,9 +8,7 @@ with open("mock_database.json") as f:
 
 def find_user(phone=None, email=None):
     for user in database:
-        if phone and user["phone_number"] == phone:
-            return user
-        if email and user["email"] == email:
+        if phone and user["phone_number"] == phone and email and user["email"] == email:
             return user
     return None
 
