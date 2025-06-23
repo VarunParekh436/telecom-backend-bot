@@ -44,18 +44,25 @@ def webhook():
 
     user = find_user(phone, email)
     if not user:
+        retry_count = params.get("retry_count", 0)
+        retry_count += 1
+
         response = {
             "fulfillment_response": {
-                "messages": [{"text": {"text": ["Authentication failed. Please check your phone number or email."]}}]
+                "messages": [
+                    {"text": {"text": ["Authentication failed. Please check your phone number or email."]}}
+                ]
             },
             "sessionInfo": {
                 "parameters": {
-                    "authenticated": False
+                    "authenticated": False,
+                    "retry_count": retry_count
                 }
             }
         }
-        print(json.dumps(response, indent = 2))
+        print(json.dumps(response, indent=2))
         return jsonify(response)
+
 
     # If month is not provided, just authenticate
     if not month:
