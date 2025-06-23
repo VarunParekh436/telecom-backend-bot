@@ -44,7 +44,7 @@ def webhook():
 
     user = find_user(phone, email)
     if not user:
-        return jsonify({
+        response = {
             "fulfillment_response": {
                 "messages": [{"text": {"text": ["Authentication failed. Please check your phone number or email."]}}]
             },
@@ -53,11 +53,13 @@ def webhook():
                     "authenticated": False
                 }
             }
-        })
+        }
+        print(json.dumps(response, indent = 2))
+        return jsonify(response)
 
     # If month is not provided, just authenticate
     if not month:
-        return jsonify({
+        response1 = {
             "fulfillment_response": {
                 "messages": [{"text": {"text": ["Authentication successful. What month would you like to compare?"]}}]
             },
@@ -66,7 +68,9 @@ def webhook():
                     "authenticated": True
                 }
             }
-        })
+        }
+        print(json.dumps(response1, indent = 2))
+        return jsonify(response1)
 
     # If month is provided, compare bills
     message = compare_bills(user["bills"], month)
