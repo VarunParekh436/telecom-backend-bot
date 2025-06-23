@@ -38,7 +38,6 @@ def compare_bills(bills, current_month):
 def webhook():
     req = request.get_json()
     params = req.get("sessionInfo", {}).get("parameters", {})
-
     phone = params.get("phone_number")
     email = params.get("email")
     month = params.get("month")
@@ -47,12 +46,30 @@ def webhook():
     if not user:
         return jsonify({
             "fulfillment_response": {
-                "messages": [{"text": {"text": ["User not found. Please check your phone number or email."]}}]
+                "messages": [{"text": {"text": ["Authentication failed. Please check your phone number or email."]}}]
+            },
+            "sessionInfo": {
+                "parameters": {
+                    "authenticated": False
+                }
             }
         })
 
-    message = compare_bills(user["bills"], month)
+    # If month is not provided, just authenticate
+    if not month:
+        return jsonify({
+            "fulfillment_response": {
+                "messages": [{"text": {"text": ["Authentication successful. What month would you like to compare?"]}}]
+            },
+            "sessionInfo": {
+                "parameters": {
+                    "authenticated": True
+                }
+            }
+        })
 
+    # If month is provided, compare bills
+    message = compare_bills(user["bills"], month)
     return jsonify({
         "fulfillment_response": {
             "messages": [{"text": {"text": [message]}}]
