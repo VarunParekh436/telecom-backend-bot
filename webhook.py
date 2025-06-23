@@ -6,7 +6,7 @@ app = Flask(__name__)
 with open("mock_database.json") as f:
     database = json.load(f)
 
-def find_user(phone=None, email=None):
+def find_user(phone, email):
     for user in database:
         if phone and user["phone_number"] == phone:
             return user
