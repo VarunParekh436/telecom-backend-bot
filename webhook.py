@@ -18,10 +18,13 @@ def find_user(phone=None, email=None):
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json()
-    print("Incoming request:", json.dumps(req, indent=2))
     params = req.get("sessionInfo", {}).get("parameters", {})
-    phone = params.get("phone_number")
+    print("Parameters received:", params)
+
+    # Try both possible keys for phone number
+    phone = params.get("phone_number") or params.get("phone")
     email = params.get("email")
+
 
     user = find_user(phone, email)
 
