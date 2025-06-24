@@ -6,14 +6,20 @@ app = Flask(__name__)
 with open("mock_database.json") as f:
     database = json.load(f)
 
+def normalize_phone(phone):
+    return phone.replace("+", "").replace("-", "").replace(" ", "")
+
 def find_user(phone=None, email=None):
-    print(f"Authenticating user with phone: {phone}, email: {email}")
+    print(f"Authenticating user with phone: '{phone}', email: '{email}'")
+    phone = normalize_phone(phone)
     for user in database:
-        if phone and email and user["phone_number"] == phone and user["email"] == email:
+        db_phone = normalize_phone(user["phone_number"])
+        if phone and email and db_phone == phone and user["email"] == email:
             print("User authenticated successfully.")
             return user
     print("Authentication failed.")
     return None
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
