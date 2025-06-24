@@ -110,6 +110,14 @@ def webhook():
                 "messages": [{"text": {"text": [message]}}]
             }
         })
+    
+    # Default response if no intent matched
+    return jsonify({
+        "fulfillment_response": {
+            "messages": [{"text": {"text": ["I'm here to help with your bills. You can ask me to compare them or explain charges."]}}]
+        }
+    })
+
 
 if __name__ == "__main__":
     import os
