@@ -20,6 +20,21 @@ def find_user(phone=None, email=None):
     print("Authentication failed.")
     return None
 
+def compare_bills(bills, current_month):
+    current = next((b for b in bills if b["month"] == current_month), None)
+    if not current:
+        return "No billing data found for this month."
+    current_index = bills.index(current)
+    previous = bills[current_index - 1] if current_index > 0 else None
+    if not previous:
+        return f"Your total bill for {current_month} is ${current['total']:.2f}."
+    diff = current["total"] - previous["total"]
+    explanation = f"Your bill increased by ${diff:.2f} from {previous['month']} to {current_month}.\n\n"
+    explanation += "Here's a breakdown of the charges:\n"
+    for key, value in current["charges"].items():
+        explanation += f"- {key.replace('_', ' ').title()}: ${value:.2f}\n"
+    return explanation
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -65,16 +80,36 @@ def webhook():
 
     #Authentication successful
     print("Authentication successful. Moving to next step.")
-    return jsonify({
-        "fulfillment_response": {
-            "messages": [{"text": {"text": ["Authentication successful. How can I help you today?"]}}]
-        },
-        "sessionInfo": {
-            "parameters": {
-                "authenticated": True
+    if not params.get("authenticated"):
+        return jsonify({
+            "fulfillment_response": {
+                "messages": [{"text": {"text": ["Authentication successful. How can I help you today?"]}}]
+            },
+            "sessionInfo": {
+                "parameters": {
+                    "authenticated": True
+                }
             }
-        }
-    })
+        })
+
+    # Check if user is asking for bill comparison
+    intent = req.get("intentInfo", {}).get("lastMatchedIntent", "")
+    if intent == "CompareBillsIntent":
+        print("CompareBillsIntent matched.")
+        bills = user.get("bills", [])
+        if len(bills) < 1:
+            return jsonify({
+                "fulfillment_response": {
+                    "messages": [{"text": {"text": ["No billing history available."]}}]
+                }
+            })
+        latest_month = bills[-1]["month"]
+        message = compare_bills(bills, latest_month)
+        return jsonify({
+            "fulfillment_response": {
+                "messages": [{"text": {"text": [message]}}]
+            }
+        })
 
 if __name__ == "__main__":
     import os
