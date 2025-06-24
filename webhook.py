@@ -54,7 +54,7 @@ def webhook():
             }
         })
 
-    # ✅ Authentication successful
+    #Authentication successful
     print("Authentication successful. Moving to next step.")
     return jsonify({
         "fulfillment_response": {
