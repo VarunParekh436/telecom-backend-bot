@@ -35,40 +35,25 @@ def compare_bills(bills, current_month):
         explanation += f"- {key.replace('_', ' ').title()}: ${value:.2f}\n"
     return explanation
 
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json()
     params = req.get("sessionInfo", {}).get("parameters", {})
     print("Parameters received:", params)
 
-    # Try both possible keys for phone number
     phone = params.get("phone_number") or params.get("phone")
     email = params.get("email")
-
-
     user = find_user(phone, email)
 
     if not user:
-        retry_count = params.get("retry_count", 0)
-        retry_count += 1
+        retry_count = params.get("retry_count", 0) + 1
         print(f"Authentication failed. Retry count: {retry_count}")
+        message = "Authentication failed. Please check your phone number or email."
         if retry_count >= 3:
-            print("Too many failed attempts.")
-            return jsonify({
-                "fulfillment_response": {
-                    "messages": [{"text": {"text": ["Authentication failed multiple times. Please contact support."]}}]
-                },
-                "sessionInfo": {
-                    "parameters": {
-                        "authenticated": False,
-                        "retry_count": retry_count
-                    }
-                }
-            })
+            message = "Authentication failed multiple times. Please contact support."
         return jsonify({
             "fulfillment_response": {
-                "messages": [{"text": {"text": ["Authentication failed. Please check your phone number or email."]}}]
+                "messages": [{"text": {"text": [message]}}]
             },
             "sessionInfo": {
                 "parameters": {
@@ -78,8 +63,7 @@ def webhook():
             }
         })
 
-    #Authentication successful
-    print("Authentication successful. Moving to next step.")
+    # If not yet marked authenticated, send welcome message
     if not params.get("authenticated"):
         return jsonify({
             "fulfillment_response": {
@@ -87,12 +71,14 @@ def webhook():
             },
             "sessionInfo": {
                 "parameters": {
-                    "authenticated": True
+                    "authenticated": True,
+                    "phone_number": phone,
+                    "email": email
                 }
             }
         })
 
-    # Check if user is asking for bill comparison
+    # Handle CompareBillsIntent
     intent = req.get("intentInfo", {}).get("lastMatchedIntent", "")
     if intent == "CompareBillsIntent":
         print("CompareBillsIntent matched.")
@@ -110,14 +96,13 @@ def webhook():
                 "messages": [{"text": {"text": [message]}}]
             }
         })
-    
-    # Default response if no intent matched
+
+    # Default fallback response
     return jsonify({
         "fulfillment_response": {
             "messages": [{"text": {"text": ["I'm here to help with your bills. You can ask me to compare them or explain charges."]}}]
         }
     })
-
 
 if __name__ == "__main__":
     import os
