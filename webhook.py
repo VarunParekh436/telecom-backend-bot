@@ -82,7 +82,7 @@ def webhook():
     intent = req.get("intentInfo", {}).get("lastMatchedIntent", "")
     print("Matched intent:", intent)
 
-    if intent.endsWith("CompareBillsIntent"):
+    if intent.endswith("CompareBillsIntent"):
         print("CompareBillsIntent matched.")
         bills = user.get("bills", [])
         if len(bills) < 1:
