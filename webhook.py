@@ -20,21 +20,6 @@ def find_user(phone=None, email=None):
     print("Authentication failed.")
     return None
 
-def compare_bills(bills, current_month):
-    current = next((b for b in bills if b["month"] == current_month), None)
-    if not current:
-        return "No billing data found for this month."
-    current_index = bills.index(current)
-    previous = bills[current_index - 1] if current_index > 0 else None
-    if not previous:
-        return f"Your total bill for {current_month} is ${current['total']:.2f}."
-    diff = current["total"] - previous["total"]
-    explanation = f"Your bill increased by ${diff:.2f} from {previous['month']} to {current_month}.\n\n"
-    explanation += "Here's a breakdown of the charges:\n"
-    for key, value in current["charges"].items():
-        explanation += f"- {key.replace('_', ' ').title()}: ${value:.2f}\n"
-    return explanation
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json()
@@ -47,14 +32,7 @@ def webhook():
 
     if not user:
         retry_count = params.get("retry_count", 0) + 1
-        print(f"Authentication failed. Retry count: {retry_count}")
-        message = "Authentication failed. Please check your phone number or email."
-        if retry_count >= 3:
-            message = "Authentication failed multiple times. Please contact support."
         return jsonify({
-            "fulfillment_response": {
-                "messages": [{"text": {"text": [message]}}]
-            },
             "sessionInfo": {
                 "parameters": {
                     "authenticated": False,
@@ -63,12 +41,8 @@ def webhook():
             }
         })
 
-    # If not yet marked authenticated, send welcome message
     if not params.get("authenticated"):
         return jsonify({
-            "fulfillment_response": {
-                "messages": [{"text": {"text": ["Authentication successful. How can I help you today?"]}}]
-            },
             "sessionInfo": {
                 "parameters": {
                     "authenticated": True,
@@ -78,31 +52,32 @@ def webhook():
             }
         })
 
-    # Handle CompareBillsIntent
-    intent = req.get("intentInfo", {}).get("lastMatchedIntent", "")
-    print("Matched intent:", intent)
-
-    if intent.endswith("48d311db-a0a7-4bc2-a674-e4581aa51fac"):
-        print("CompareBillsIntent matched.")
-        bills = user.get("bills", [])
-        if len(bills) < 1:
-            return jsonify({
-                "fulfillment_response": {
-                    "messages": [{"text": {"text": ["No billing history available."]}}]
-                }
-            })
-        latest_month = bills[-1]["month"]
-        message = compare_bills(bills, latest_month)
+    # Always return bill data if authenticated
+    bills = user.get("bills", [])
+    if len(bills) < 1:
         return jsonify({
-            "fulfillment_response": {
-                "messages": [{"text": {"text": [message]}}]
+            "sessionInfo": {
+                "parameters": {
+                    "bill_data_available": False
+                }
             }
         })
 
-    # Default fallback response
+    latest = bills[-1]
+    previous = bills[-2] if len(bills) > 1 else None
+
     return jsonify({
-        "fulfillment_response": {
-            "messages": [{"text": {"text": ["I'm here to help with your bills. You can ask me to compare them or explain charges."]}}]
+        "sessionInfo": {
+            "parameters": {
+                "bill_data_available": True,
+                "latest_month": latest["month"],
+                "latest_total": latest["total"],
+                "latest_charges": latest["charges"],
+                "previous_month": previous["month"] if previous else None,
+                "previous_total": previous["total"] if previous else None,
+                "previous_charges": previous["charges"] if previous else None,
+                "bill_difference": round(latest["total"] - previous["total"], 2) if previous else None
+            }
         }
     })
 
