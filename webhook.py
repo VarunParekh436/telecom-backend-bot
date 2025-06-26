@@ -3,6 +3,7 @@ import json
 
 app = Flask(__name__)
 
+# Load mock database
 with open("mock_database.json") as f:
     database = json.load(f)
 
@@ -19,6 +20,13 @@ def find_user(phone=None, email=None):
             return user
     print("Authentication failed.")
     return None
+
+# Format charges into a user-friendly bullet list
+def format_charges(charges):
+    return '\n'.join([
+        f"• {key.replace('_', ' ').title()}: ${value:.2f}"
+        for key, value in charges.items()
+    ])
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
@@ -66,6 +74,9 @@ def webhook():
     latest = bills[-1]
     previous = bills[-2] if len(bills) > 1 else None
 
+    formatted_latest = format_charges(latest["charges"])
+    formatted_previous = format_charges(previous["charges"]) if previous else None
+
     return jsonify({
         "sessionInfo": {
             "parameters": {
@@ -73,9 +84,11 @@ def webhook():
                 "latest_month": latest["month"],
                 "latest_total": latest["total"],
                 "latest_charges": latest["charges"],
+                "formatted_latest_charges": formatted_latest,
                 "previous_month": previous["month"] if previous else None,
                 "previous_total": previous["total"] if previous else None,
                 "previous_charges": previous["charges"] if previous else None,
+                "formatted_previous_charges": formatted_previous,
                 "bill_difference": round(latest["total"] - previous["total"], 2) if previous else None
             }
         }
