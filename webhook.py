@@ -54,17 +54,16 @@ def webhook():
     retry_count = params.get("retry_count", 0)
     authenticated = params.get("authenticated", False)
 
-    if not authenticated:
-        return jsonify({
-            "sessionInfo": {
-                "parameters": {
-                    "authenticated": True,
-                    "phone_number": phone,
-                    "email": email, 
-                    "retry_count": retry_count
-                }
+    return jsonify({
+        "sessionInfo": {
+            "parameters": {
+                "authenticated": True,
+                "phone_number": phone,
+                "email": email, 
+                "retry_count": retry_count
             }
-        })
+        }
+    })
 
     # Always return bill data if authenticated
     bills = user.get("bills", [])
