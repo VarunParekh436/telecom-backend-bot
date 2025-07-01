@@ -8,6 +8,8 @@ with open("mock_database.json") as f:
     database = json.load(f)
 
 def normalize_phone(phone):
+    if not phone:
+        return ""
     return phone.replace("+", "").replace("-", "").replace(" ", "")
 
 def find_user(phone=None, email=None):
@@ -31,7 +33,7 @@ def format_charges(charges):
 @app.route("/webhook", methods=["POST"])
 def webhook():
     req = request.get_json()
-    params = req.get("sessionInfo", {}).get("parameters", {})
+    params = req
     print("Parameters received:", params)
 
     phone = params.get("phone_number") or params.get("phone")
