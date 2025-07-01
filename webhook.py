@@ -50,14 +50,15 @@ def webhook():
                 }
             }
         })
-
-    if not params.get("authenticated"):
+    
+    if not params.get("authenticated", False):
         return jsonify({
             "sessionInfo": {
                 "parameters": {
                     "authenticated": True,
                     "phone_number": phone,
-                    "email": email
+                    "email": email, 
+                    "retry_count": params.get("retry_count", 0)
                 }
             }
         })
