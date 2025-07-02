@@ -38,42 +38,32 @@ def webhook():
 
     phone = params.get("phone_number") or params.get("phone")
     email = params.get("email")
+    retry_count = params.get("retry_count", 0)
+    authenticated = params.get("authenticated", False)
     user = find_user(phone, email)
 
     if not user:
-        retry_count = params.get("retry_count", 0) + 1
+        retry_count += 1
         return jsonify({
-            "sessionInfo": {
-                "parameters": {
-                    "authenticated": False,
-                    "retry_count": retry_count
-                }
-            }
+            "authenticated": False,
+            "retry_count": retry_count
         })
     
-    retry_count = params.get("retry_count", 0)
-    authenticated = params.get("authenticated", False)
-
-    return jsonify({
-        "sessionInfo": {
-            "parameters": {
-                "authenticated": True,
-                "phone_number": phone,
-                "email": email, 
-                "retry_count": retry_count
-            }
-        }
-    })
+    if not authenticated:
+        return jsonify({
+            "authenticated": True,
+            "phone_number": phone,
+            "email": email, 
+            "retry_count": retry_count
+        })
 
     # Always return bill data if authenticated
     bills = user.get("bills", [])
     if len(bills) < 1:
         return jsonify({
-            "sessionInfo": {
-                "parameters": {
-                    "bill_data_available": False
-                }
-            }
+            "authenticated": True,
+            "retry_count": retry_count,
+            "bill_data_available": False
         })
 
     latest = bills[-1]
@@ -83,20 +73,16 @@ def webhook():
     formatted_previous = format_charges(previous["charges"]) if previous else None
 
     return jsonify({
-        "sessionInfo": {
-            "parameters": {
-                "bill_data_available": True,
-                "latest_month": latest["month"],
-                "latest_total": latest["total"],
-                "latest_charges": latest["charges"],
-                "formatted_latest_charges": formatted_latest,
-                "previous_month": previous["month"] if previous else None,
-                "previous_total": previous["total"] if previous else None,
-                "previous_charges": previous["charges"] if previous else None,
-                "formatted_previous_charges": formatted_previous,
-                "bill_difference": round(latest["total"] - previous["total"], 2) if previous else None
-            }
-        }
+        "bill_data_available": True,
+        "latest_month": latest["month"],
+        "latest_total": latest["total"],
+        "latest_charges": latest["charges"],
+        "formatted_latest_charges": formatted_latest,
+        "previous_month": previous["month"] if previous else None,
+        "previous_total": previous["total"] if previous else None,
+        "previous_charges": previous["charges"] if previous else None,
+        "formatted_previous_charges": formatted_previous,
+        "bill_difference": round(latest["total"] - previous["total"], 2) if previous else None
     })
 
 if __name__ == "__main__":
