@@ -50,12 +50,7 @@ def webhook():
         })
     
     if not authenticated:
-        return jsonify({
-            "authenticated": True,
-            "phone_number": phone,
-            "email": email, 
-            "retry_count": retry_count
-        })
+        authenticated = True
 
     # Always return bill data if authenticated
     bills = user.get("bills", [])
